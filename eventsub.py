@@ -12,17 +12,16 @@
 
 import asyncio
 import json
-import os
 from typing import AsyncGenerator
 
 import aiohttp
 import websockets
 
+import config
 import messages
 
 debug = False
-token = os.environ["TWITCH_BOT_ACCESS_TOKEN"]
-client_id = os.environ["TWITCH_CLIENT_ID"]
+token, client_id = config.get_tokens(["TWITCH_BOT_ACCESS_TOKEN", "TWITCH_CLIENT_ID"])
 headers = {
     "Authorization": f"Bearer {token}",
     "Client-Id": client_id,
@@ -32,7 +31,10 @@ subscriptions = [
     {
         "type": "channel.follow",
         "version": "2",
-        "condition": {"broadcaster_user_id": "147239368", "moderator_user_id": "147239368"},
+        "condition": {
+            "broadcaster_user_id": "147239368",
+            "moderator_user_id": "147239368",
+        },
     },
     {
         "type": "channel.subscribe",
@@ -80,18 +82,24 @@ async def send(session: aiohttp.ClientSession, url: str, session_id: str, data: 
 async def subscribe(subs: list[dict], session_id: str):
     async with aiohttp.ClientSession(headers=headers) as session:
         await asyncio.gather(
-            *[send(
-                session,
-                "https://api.twitch.tv/helix/eventsub/subscriptions",
-                session_id=session_id,
-                data=subscription,
-            )
-                for subscription in subs]
+            *[
+                send(
+                    session,
+                    "https://api.twitch.tv/helix/eventsub/subscriptions",
+                    session_id=session_id,
+                    data=subscription,
+                )
+                for subscription in subs
+            ]
         )
 
 
 async def message_gen() -> AsyncGenerator[dict, None]:
-    uri = "ws://localhost:8080/eventsub" if debug else "wss://eventsub-beta.wss.twitch.tv/ws"
+    uri = (
+        "ws://localhost:8080/eventsub"
+        if debug
+        else "wss://eventsub-beta.wss.twitch.tv/ws"
+    )
     while True:
         async with websockets.connect(uri, ping_interval=None) as socket:
             welcome_message = await socket.recv()
@@ -162,7 +170,9 @@ class MessageProcessor:
                     return
                 tier = tiers[message["payload"]["event"]["tier"]]
                 username = message["payload"]["event"]["user_name"]
-                response = messages.subscription_message.format(tier=tier, user=username)
+                response = messages.subscription_message.format(
+                    tier=tier, user=username
+                )
             case "channel.subscription.message":
                 if message["payload"]["event"]["is_gift"]:
                     return
@@ -171,7 +181,9 @@ class MessageProcessor:
                 streak = message["payload"]["event"]["cumulative_months"]
                 if streak == 1 or streak is None:
                     return
-                response = messages.resubscription_message.format(tier=tier, months=streak, user=username)
+                response = messages.resubscription_message.format(
+                    tier=tier, months=streak, user=username
+                )
             case "channel.subscription.gift":
                 tier = tiers[message["payload"]["event"]["tier"]]
                 count = message["payload"]["event"]["total"]
@@ -180,11 +192,17 @@ class MessageProcessor:
                 if message["payload"]["event"]["is_anonymous"] and count == 1:
                     response = messages.anon_gift_message.format(tier=tier)
                 elif message["payload"]["event"]["is_anonymous"]:
-                    response = messages.anon_gifts_message.format(tier=tier, count=count)
+                    response = messages.anon_gifts_message.format(
+                        tier=tier, count=count
+                    )
                 elif count == 1:
-                    response = messages.gift_message.format(tier=tier, user=sender, total=total)
+                    response = messages.gift_message.format(
+                        tier=tier, user=sender, total=total
+                    )
                 else:
-                    response = messages.gifts_message.format(tier=tier, count=count, user=sender, total=total)
+                    response = messages.gifts_message.format(
+                        tier=tier, count=count, user=sender, total=total
+                    )
             case "channel.cheer":
                 bits = message["payload"]["event"]["bits"]
                 username = message["payload"]["event"]["user_name"]

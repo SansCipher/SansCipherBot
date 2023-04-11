@@ -1,25 +1,26 @@
 import asyncio
-import os
 
 import discord
 from discord import app_commands
 
+import config
 
-# Get the bot token from the configuration file.
-token = os.environ["DISCORD_TOKEN"]
-guild = int(os.environ["DISCORD_GUILD"])
+# Get the bot token from the tokens.json.
+token, guild = config.get_tokens(["DISCORD_TOKEN", "DISCORD_GUILD"])
+guild = int(guild)
 
 
 def is_me():
     def predicate(interaction: discord.Interaction) -> bool:
         return interaction.user.id == 195227710883233792
+
     return app_commands.check(predicate)
 
 
 @app_commands.command(name="ping", description="Pong!")
 @is_me()
 async def ping(interaction: discord.Interaction):
-    await interaction.response.send_message("Pong!")
+    await interaction.response().send_message("Pong!")
 
 
 commands = [ping]
@@ -49,7 +50,7 @@ class SansCipherBot(discord.Client):
                     answer = await answer
             except Exception as e:
                 answer = e
-            await interaction.response.send_message(str(answer))
+            await interaction.response().send_message(str(answer))
 
         await self.tree.sync()
         print("Synced application commands.")

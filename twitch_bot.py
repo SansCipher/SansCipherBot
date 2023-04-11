@@ -1,15 +1,20 @@
+import config
+
 # import re
-import os
 import asyncio
 
 import twitchio
 import aiohttp
 
-# Get the bot tokens from the environment variables.
-bot_access_token = os.environ["TWITCH_BOT_ACCESS_TOKEN"]
-bot_refresh_token = os.environ["TWITCH_BOT_REFRESH_TOKEN"]
-client_id = os.environ["TWITCH_CLIENT_ID"]
-client_secret = os.environ["TWITCH_CLIENT_SECRET"]
+# Get the bot tokens from the tokens.json.
+bot_access_token, bot_refresh_token, client_id, client_secret = config.get_tokens(
+    [
+        "TWITCH_BOT_ACCESS_TOKEN",
+        "TWITCH_BOT_REFRESH_TOKEN",
+        "TWITCH_CLIENT_ID",
+        "TWITCH_CLIENT_SECRET",
+    ]
+)
 
 
 async def refresh():
@@ -27,7 +32,7 @@ async def refresh():
             print(data)
             global bot_access_token
             bot_access_token = data["access_token"]
-            os.environ["TWITCH_ACCESS_TOKEN"] = bot_access_token
+            config.set_tokens({"TWITCH_BOT_ACCESS_TOKEN": bot_access_token})
 
 
 async def validate():

@@ -8,8 +8,11 @@ import asyncio
 import aiohttp
 import secrets
 
-client_id = os.environ["TWITCH_CLIENT_ID"]
-client_secret = os.environ["TWITCH_CLIENT_SECRET"]
+import config
+
+client_id, client_secret = config.get_tokens(
+    ["TWITCH_CLIENT_ID", "TWITCH_CLIENT_SECRET"]
+)
 redirect_uri = "https://localhost"
 scopes = [
     "bits:read",
@@ -52,10 +55,12 @@ async def get_token(code: str):
         access_token = data["access_token"]
         refresh_token = data["refresh_token"]
         print(f"Access token: {access_token}, refresh token: {refresh_token}")
-        # PyCharm doesn't update the environment variables even on os.environ set.
-        # os.environ["TWITCH_BOT_ACCESS_TOKEN"] = access_token
-        # os.environ["TWITCH_BOT_REFRESH_TOKEN"] = refresh_token
-        # Going to have to do it manually.
+        config.set_tokens(
+            {
+                "TWITCH_BOT_ACCESS_TOKEN": access_token,
+                "TWITCH_BOT_REFRESH_TOKEN": refresh_token,
+            }
+        )
 
 
 async def amain():
