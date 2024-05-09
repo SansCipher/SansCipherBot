@@ -48,17 +48,16 @@ async def validate():
                 return True
 
 
-class SansCipherBot(twitchio.Client):
-    # noinspection PyTypeChecker
+class SyPyBot(twitchio.Client):
     def __init__(self):
-        super().__init__(bot_access_token, initial_channels=["sanscipher"])
-        self.boss: twitchio.Channel = None  # Reference to the sanscipher channel.
-        self.boss_user: twitchio.User = None  # Reference to the sanscipher user.
+        super().__init__(bot_access_token, initial_channels=["sy_py"])
+        self.boss: twitchio.Channel = None  # Reference to the sy_py channel.
+        self.boss_user: twitchio.User = None  # Reference to the sy_py user.
         self.discord = None  # Reference to the discord bot.
 
     async def event_ready(self):
-        self.boss = self.get_channel("sanscipher")
-        self.boss_user = (await self.fetch_users(["sanscipher"]))[0]
+        self.boss = self.get_channel("sy_py")
+        self.boss_user = (await self.fetch_users(["sy_py"]))[0]
         print(f"Logged in as {self.nick} (ID: {self.user_id})")
         print(f"Boss: {self.boss}")
         print("------")
@@ -70,6 +69,12 @@ class SansCipherBot(twitchio.Client):
 
 async def setup():
     await validate()
-    bot = SansCipherBot()
+    bot = SyPyBot()
     asyncio.create_task(bot.start())
     return bot
+
+
+if __name__ == "__main__":
+    loop = asyncio.new_event_loop()
+    loop.create_task(setup())
+    loop.run_forever()

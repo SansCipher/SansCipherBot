@@ -20,7 +20,8 @@ def is_me():
 @app_commands.command(name="ping", description="Pong!")
 @is_me()
 async def ping(interaction: discord.Interaction):
-    await interaction.response().send_message("Pong!")
+    print(interaction)
+    await interaction.response.send_message("Pong!")
 
 
 commands = [ping]
@@ -50,7 +51,7 @@ class SansCipherBot(discord.Client):
                     answer = await answer
             except Exception as e:
                 answer = e
-            await interaction.response().send_message(str(answer))
+            await interaction.response.send_message(str(answer))
 
         await self.tree.sync()
         print("Synced application commands.")
@@ -62,3 +63,9 @@ async def setup():
     print("Starting Discord bot...")
     asyncio.create_task(bot.start(token))
     return bot
+
+
+if __name__ == "__main__":
+    loop = asyncio.new_event_loop()
+    loop.create_task(setup())
+    loop.run_forever()

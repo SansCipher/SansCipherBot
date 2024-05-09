@@ -61,6 +61,11 @@ subscriptions = [
         "version": "1",
         "condition": {"to_broadcaster_user_id": "147239368"},
     },
+    {
+        "type": "channel.channel_points_custom_reward_redemption.add",
+        "version": "1",
+        "condition": {"broadcaster_user_id": "147239368"},
+    },
 ]
 tiers = {
     "1000": "Tier 1",
@@ -95,11 +100,7 @@ async def subscribe(subs: list[dict], session_id: str):
 
 
 async def message_gen() -> AsyncGenerator[dict, None]:
-    uri = (
-        "ws://localhost:8080/eventsub"
-        if debug
-        else "wss://eventsub-beta.wss.twitch.tv/ws"
-    )
+    uri = "ws://localhost:8080/eventsub" if debug else "wss://eventsub.wss.twitch.tv/ws"
     while True:
         async with websockets.connect(uri, ping_interval=None) as socket:
             welcome_message = await socket.recv()
@@ -135,6 +136,10 @@ async def message_gen() -> AsyncGenerator[dict, None]:
                         break  # Welcome to Bodgeland, population: me.
                     case _:
                         print(message)
+
+
+def parse_reward(reward: dict, username: str) -> str:
+    return "A reward was redeemed!"  # TODO
 
 
 class MessageProcessor:
@@ -214,6 +219,9 @@ class MessageProcessor:
                 username = message["payload"]["event"]["from_broadcaster_user_name"]
                 viewers = message["payload"]["event"]["viewers"]
                 response = messages.raid_message.format(user=username, viewers=viewers)
+            case "channel.channel_points_custom_reward_redemption.add":
+                username = message["payload"]["event"]["user_name"]
+                response = parse_reward(message["payload"]["event"]["reward"], username)
             case _:
                 response = "But nobody came."  # This is never reached, but type checker will complain if it's not here.
         await twitch_bot.boss.send(response)
@@ -224,3 +232,9 @@ async def setup():
     await anext(generator)  # Wait for welcome message and send subscription requests.
     processor = MessageProcessor(generator)
     return processor
+
+
+if __name__ == "__main__":
+    loop = asyncio.new_event_loop()
+    loop.create_task(setup())
+    loop.run_forever()

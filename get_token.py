@@ -22,8 +22,9 @@ scopes = [
     "channel:manage:predictions",
     "channel:manage:raids",
     "channel:manage:redemptions",
-    "channel:read:subscriptions",
     "channel:manage:vips",
+    "channel:read:subscriptions",
+    "channel:read:redemptions",
     "moderator:read:followers",
     "moderator:manage:shoutouts",
     "chat:edit",
@@ -74,3 +75,7 @@ async def amain():
 
 def main():
     asyncio.run(amain())
+
+
+if __name__ == "__main__":
+    main()

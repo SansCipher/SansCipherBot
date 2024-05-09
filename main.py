@@ -12,6 +12,7 @@ import asyncio
 import discord_bot
 import twitch_bot
 import eventsub
+import config
 import get_token
 
 import sys
@@ -23,21 +24,19 @@ async def main():
         twitch_bot.setup(),
         eventsub.setup(),
     )
-    # discord_client, twitch_client = await asyncio.gather(
-    #     discord_bot.setup(), twitch_bot.setup()
-    # )
     print("Setup complete.")
-    # Give bots a reference to each other, so they can communicate. (I don't know if this is a good idea)
     discord_client.twitch = twitch_client
     twitch_client.discord = discord_client
-    # Give the eventsub processor a reference to the twitch client, so it can communicate.
     eventsub_processor.twitch = twitch_client
-    # Give the eventsub processor a reference to the discord client, so it can communicate.
     eventsub_processor.discord = discord_client
     # Give the eventsub processor a list of followers to avoid unfollow-follow spam.
     # But first, need to ensure that Twitch bot has connected to the Twitch API.
     await asyncio.sleep(5)  # Bodgeland, my hometown.
-    eventsub_processor.followers = {event.from_user.id for event in await twitch_client.boss_user.fetch_followers()}
+    twitch_token = config.get_tokens(["TWITCH_BOT_ACCESS_TOKEN"])[0]
+    eventsub_processor.followers = {
+        event.user.id
+        for event in await twitch_client.boss_user.fetch_channel_followers(twitch_token)
+    }
     asyncio.create_task(eventsub_processor.run())
 
 

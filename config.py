@@ -1,35 +1,29 @@
 import json
 
 
-# _data() -> dict[str, str]
-# This auxiliary function gets the contents of tokens.json as a dictionary
+def get_tokens(keys: list[str]) -> list[str | None]:
+    """Reads the tokens from the file and returns the requested keys.
 
+    Args:
+        keys: The keys of the tokens to retrieve.
 
-def _data() -> dict[str, str]:
-    try:
-        with open("tokens.json") as f:
-            data = json.load(f)
-        return data
-    except FileNotFoundError:
-        print("tokens.json file not found")
-        raise
-
-
-# get_tokens(keys: list[str]) -> list[str]
-# This function takes a list of keys for tokens.json files and returns a list of values corresponding to those keys
-
-
-def get_tokens(keys: list[str]) -> list[str]:
-    data = _data()
-    return [data.get(key, None) for key in keys]
-
-
-# set_tokens(updates: dict[str, str]) -> None:
-# This function takes a dict of key value pairs and sets the tokens.json file to be those values.
+    Returns:
+        The values of the requested keys, in the same order as the input list.
+        Any keys that are not found in the file will be returned as None.
+    """
+    with open("tokens.json") as f:
+        tokens: dict[str, str] = json.load(f)
+    return [tokens.get(key) for key in keys]
 
 
 def set_tokens(updates: dict[str, str]) -> None:
-    data = _data()
+    """Sets the tokens in the file.
+
+    Args:
+        updates: The updates to the tokens.
+    """
+    with open("tokens.json") as f:
+        data = json.load(f)
     data.update(updates)
     with open("tokens.json", "w") as f:
         json.dump(data, f, indent=4)
