@@ -2,6 +2,7 @@ import config
 
 # import re
 import asyncio
+import json
 
 import twitchio
 import aiohttp
@@ -16,6 +17,10 @@ bot_access_token, bot_refresh_token, client_id, client_secret = config.get_token
     ]
 )
 
+# Get the characters from the botc_characters.json.
+with open("botc_characters.json", encoding="utf-8-sig") as f:
+    characters = json.load(f)
+
 
 async def refresh():
     async with aiohttp.ClientSession() as session:
@@ -29,7 +34,6 @@ async def refresh():
             },
         ) as resp:
             data = await resp.json()
-            print(data)
             global bot_access_token
             bot_access_token = data["access_token"]
             config.set_tokens({"TWITCH_BOT_ACCESS_TOKEN": bot_access_token})
@@ -55,6 +59,12 @@ class SyPyBot(twitchio.Client):
         self.boss_user: twitchio.User = None  # Reference to the sy_py user.
         self.discord = None  # Reference to the discord bot.
 
+    async def _exit(self):
+        if self.discord:
+            await self.discord.close()
+        await self.close()
+        await self.loop.stop()
+
     async def event_ready(self):
         self.boss = self.get_channel("sy_py")
         self.boss_user = (await self.fetch_users(["sy_py"]))[0]
@@ -65,6 +75,19 @@ class SyPyBot(twitchio.Client):
     async def event_token_expired(self):
         await refresh()
         return bot_access_token
+
+    async def event_message(self, message: twitchio.Message):
+        if message.echo:
+            return
+        if message.content == "exit" and message.author.is_broadcaster:
+            await self._exit()
+        if message.content.startswith("!"):
+            role = message.content[1:].strip().lower()
+            if role in characters:
+                response = characters[role]
+            else:
+                response = f"Character {role} not found."
+            await message.channel.send(response)
 
 
 async def setup():

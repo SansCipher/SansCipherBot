@@ -19,11 +19,9 @@ import sys
 
 
 async def main():
-    discord_client, twitch_client, eventsub_processor = await asyncio.gather(
-        discord_bot.setup(),
-        twitch_bot.setup(),
-        eventsub.setup(),
-    )
+    discord_client = await discord_bot.setup()
+    twitch_client = await twitch_bot.setup()
+    eventsub_processor = await eventsub.setup()
     print("Setup complete.")
     discord_client.twitch = twitch_client
     twitch_client.discord = discord_client

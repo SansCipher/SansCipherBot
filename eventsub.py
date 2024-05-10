@@ -80,7 +80,6 @@ async def send(session: aiohttp.ClientSession, url: str, session_id: str, data: 
     await asyncio.sleep(0.1)  # Don't want to spam Twitch's servers.
     async with session.post(url, json=data) as resp:
         r_json = await resp.json()
-        print(r_json)
         return r_json
 
 
